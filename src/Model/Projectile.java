@@ -6,6 +6,10 @@ import java.awt.Rectangle;
 // Classe pour les projectiles (position et direction)
 public class Projectile {
 
+    // Taille du projectile
+    public static final int WIDTH_PROJECTILE = 12;
+    public static final int HEIGHT_PROJECTILE = 12;
+
     // Attributs de position et direction
     private Point position;
     private Point direction;
@@ -15,7 +19,7 @@ public class Projectile {
     public Projectile(Point position, Point direction) {
         this.position = position;
         this.direction = direction;
-        hitboxProjectile = new Rectangle(position.x, position.y, 10,10);
+        hitboxProjectile = new Rectangle(position.x, position.y, WIDTH_PROJECTILE,HEIGHT_PROJECTILE);
     }
 
     // Getteurs pour récupérer la position et la direction

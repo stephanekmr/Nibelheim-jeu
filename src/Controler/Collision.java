@@ -1,8 +1,8 @@
 package Controler;
 
-import Model.Araignee;
+import Model.Character;
+import Model.Ennemis;
 import Model.Tir;
-import View.Affichage;
 
 // Gérer toutes les collisions
 public class Collision extends Thread {
@@ -13,15 +13,13 @@ public class Collision extends Thread {
     // Instances de classe utiles
     private Character c;
     private Tir t;
-    private Araignee a;
-    private Affichage aff;
+    private Ennemis e;
 
     // Constructeur pour initialiser les instances de classe
-    public Collision(Character c, Tir t, Araignee a, Affichage aff) {
+    public Collision(Character c, Tir t, Ennemis e) {
         this.c = c;
         this.t = t;
-        this.a = a;
-        this.aff = aff;
+        this.e = e;
     }
 
     // Methode pour gérer les collisions
@@ -29,14 +27,20 @@ public class Collision extends Thread {
     public void run() {
         while (true) {
             // Gérer les collisions entre les tirs et les araignées
-            a.removeAraigneeTouchee();
 
             // Détecter si le joueur touche un bonus
-            c.checkBonusProche();
+            if (c != null) {
+                c.checkBonusProche();
+            } else {
+                System.out.println("Le Character est null.");
+            }
 
-            // Redessiner l'écran
-            aff.revalidate();
-            aff.repaint();
+            // Détecter les collisions des ennemis
+            if (t != null && e != null) {
+                Ennemis.allCollisions(c, t);
+            } else {
+                System.out.println("Les objets Tir ou Ennemis sont null.");
+            }
 
             try {
                 Thread.sleep(DELAY);
@@ -45,5 +49,5 @@ public class Collision extends Thread {
             }
         }
     }
-    
+
 }

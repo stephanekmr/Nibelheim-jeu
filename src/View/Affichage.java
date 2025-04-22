@@ -4,436 +4,427 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import Controler.Character;
+
 import Controler.Inputs;
+import Controler.LevelManager;
 import Model.Tir;
 import Model.Obstacles;
 import Model.Araignee;
 import Model.Bonus;
-import Model.PositionAraignee;
-import Model.Ennemies;
+import Model.Bouton;
+import Model.Character;
+import Model.ComboBonus;
+import Model.Ennemis;
 import Model.Fantome;
+import Model.Goules;
 
 public class Affichage extends JPanel {
 
-    // Dimensions de la vue, statiques
+    // Dimensions de la vue
     public static final int X = 1920;
     public static final int Y = 1080;
 
-    // Buttons du jeu
-    private JButton relancerButton; // Bouton pour relancer la partie
-    private JButton acceuil;  // Bouton pour quitter le jeu
-    private JButton startGame;  // Bouton pour démarrer le jeu
-    private JButton boutiqueGame;  // Bouton pour accéder à la boutique
-    private JButton quitter; // Bouton pour quitter le jeu
-    private JButton boutique;  // Bouton pour accéder à la boutique
-    private JButton pauseButton;  // Bouton pour mettre en pause le jeu
-    private JButton resumeButton;  // Bouton pour reprendre le jeu
-
-    // Attribut pour lancer le jeu ou le mettre en pause
-    public boolean game_running = true;
-    // Attribut pour savoir si le jeu est perdu
-    public boolean game_lose = false;
-    // Attribut pour savoir si le jeu est en pause
-    public boolean game_pause = false;
-
-    // Attribut pour afficher la oboutique ou pas
-    private boolean showStore = false;
-
-    
-    
-    // Instances de classe utiles
-    private Bonus b;
-    Character c;
-    private Tir tir;
-    PositionAraignee position;
-    Inputs i;
-    private Obstacles o; // Instance de la classe Obstacles
-    private Araignee a = new Araignee(position, c, tir, b);
-    
-    // Charger l'mage pour les obstacles (caisse.png)
-    public Image imgObstacle = new ImageIcon("src/Images/caisse.png").getImage()
-        .getScaledInstance(o.WIDTH_O, o.HEIGHT_O,Image.SCALE_DEFAULT);
-
-    // Charger l'image du coin (ici on suppose qu'elle s'appelle "coin.png")
-    public Image coinImage = new ImageIcon("src/Images/coin.png").getImage()
-    .getScaledInstance(b.WIDTH_B, b.HEIGHT_B, Image.SCALE_DEFAULT);
-
-    // Position de la barre de vie
+    // Position et dimension de la barre de vie
     public static final int xBarreVie = 30;
     public static final int yBarreVie = 30;
+    public static final int heightBarreVie = 20;
+    public static final int arcBarreVie = 10;
 
-    // Dimension barre de vie
-    public static final int heightBarreVie = 20;  // Hauteur
-    public static final int arcBarreVie = 10;  // Angle des bordures
+    // Créations des boutons du jeu
+    private Bouton relancerButton = new Bouton("Nouvelle Partie", X / 2 - 100, Y / 2 - 30, 200, 50,
+            new Color(169, 169, 169), Color.WHITE, new Color(70, 130, 180), null, 18);
+    private Bouton acceuil = new Bouton("Accueil", X / 2 - 100, Y / 2 + 50, 200, 50,
+            new Color(169, 169, 169), Color.WHITE, new Color(70, 130, 180), null, 18);
+    private Bouton startGame = new Bouton("Commencer une partie", X / 2 - 200, Y - 500, 300, 55,
+            new Color(169, 169, 169), Color.WHITE, new Color(70, 130, 180), "src/Images/start_bouton.png", 18);
+    private Bouton nextStageBtn = new Bouton("Etage suivant", X / 2 + 145, Y / 2 + 285, 180, 40,
+            new Color(169, 169, 169), Color.WHITE, new Color(70, 130, 180), null, 18);
+    private Bouton quitter = new Bouton("Quitter", X - 150, 30, 100, 35,
+            new Color(255, 0, 0), Color.WHITE, new Color(255, 0, 0), null, 18);
+    private Bouton buyCombo1 = new Bouton("Buy 15p", X / 2 - 225, Y / 2 - 95, 90, 22,
+            new Color(96, 96, 96), Color.WHITE, new Color(70, 130, 180), null, 14);
+    private Bouton buyCombo2 = new Bouton("Buy 30p", X / 2 - 50, Y / 2 - 95, 90, 22,
+            new Color(96, 96, 96), Color.WHITE, new Color(70, 130, 180), null, 14);
+    private Bouton buyCombo3 = new Bouton("Buy 50p", X / 2 + 125, Y / 2 - 95, 90, 22,
+            new Color(96, 96, 96), Color.WHITE, new Color(70, 130, 180), null, 14);
 
-    // Getteurs pour game_running, game_pause et game_lose
-    public boolean getGame_running(){
-        return game_running;
-    }
-    public boolean getGame_lose(){
-        return game_lose;
-    }
-    public boolean getGame_pause(){
-        return game_pause;
-    } 
+    // Instances de classes utiles
+    private Bonus b;
+    private Character c;
+    private Tir tir;
+    private Inputs i;
+    private Obstacles o;
+    private LevelManager lm;
 
-    public Affichage(Character character, Tir t, Araignee araignee, PositionAraignee position, Bonus bonus, Inputs inputs, Obstacles obs) {
+    // Images (initialisées dans initImages() pour éviter des NullPointer lors de la
+    // création)
+    private Image imgObstacle;
+    private Image coinImage;
+    private Image imgCombo1;
+    private Image imgCombo2;
+    private Image imgCombo3;
+
+    public Affichage(Character character, Tir t, Bonus bonus, Inputs inputs, Obstacles obs, LevelManager levelManager) {
+        // Configuration du panneau
+        setLayout(null);
         setPreferredSize(new Dimension(X, Y));
+
         this.c = character;
-        this.o = obs;
         this.tir = t;
         this.b = bonus;
         this.i = inputs;
+        this.o = obs;
+        this.lm = levelManager;
 
-        // Initialisation de position si elle est nulle
-        if (position == null) {
-            this.position = new PositionAraignee(); // Exemple de position initiale
-        } else {
-            this.position = position;
-        }
-        this.a = araignee;
+        // Initialisation des images après avoir initialisé les instances
+        initImages();
 
-        // -------------------------*   Gestion des boutons   *--------------------------------------------------------------    
+        // Initialisation des boutons et des listeners
+        initButtons();
+        initListeners();
 
-        // Initialisation des boutons à afficher lors du Game Over
-        relancerButton = new JButton("Nouvelle Partie");
-        acceuil = new JButton("Acceuil");
-        startGame  = new JButton("Commencer une partie");
-        boutiqueGame  = new JButton("Boutique");
-        quitter  = new JButton("Quitter");
-        boutique  = new JButton("Boutique");
+        // Rendre invisibles certains boutons par défaut
+        hideGameButtons();
+    }
 
-        // Charger une icone dans le bouton startGame
-        ImageIcon OriginalstartIcon = new ImageIcon("src/Images/start_bouton.png"); // Image originale pour l'icone du bouton
-        Image resizedImageStart = OriginalstartIcon.getImage().getScaledInstance(40, 40, Image.SCALE_DEFAULT); // Redimensionner l'image
-        ImageIcon startIcon = new ImageIcon(resizedImageStart); // Créer un ImageIcon avec l'image redimensionnée
-        startGame.setIcon(startIcon); // Associer l'icône au bouton
+    // Initialisation des images de la vue
+    private void initImages() {
+        // S'assurer que les dimensions nécessaires sont accessibles
+        imgObstacle = new ImageIcon("src/Images/caisse.png").getImage()
+                .getScaledInstance(Obstacles.WIDTH_O, Obstacles.HEIGHT_O, Image.SCALE_DEFAULT);
+        coinImage = new ImageIcon("src/Images/coin.png").getImage()
+                .getScaledInstance(Bonus.WIDTH_B, Bonus.HEIGHT_B, Image.SCALE_DEFAULT);
+        imgCombo1 = new ImageIcon("src/Images/shoot.png").getImage()
+                .getScaledInstance(85, 85, Image.SCALE_DEFAULT);
+        imgCombo2 = new ImageIcon("src/Images/speed.png").getImage()
+                .getScaledInstance(85, 85, Image.SCALE_DEFAULT);
+        imgCombo3 = new ImageIcon("src/Images/sante.png").getImage()
+                .getScaledInstance(85, 85, Image.SCALE_DEFAULT);
+    }
 
-        // Charger une icone dans le bouton Boutique
-        ImageIcon OriginalboutiqueIcon = new ImageIcon("src/Images/boutique.png"); // Image originale pour l'icone du bouton
-        Image resizedImageboutique = OriginalboutiqueIcon.getImage().getScaledInstance(30, 30, Image.SCALE_DEFAULT); // Redimensionner l'image
-        ImageIcon boutiqueIcon = new ImageIcon(resizedImageboutique); // Créer un ImageIcon avec l'image redimensionnée
-        boutique.setIcon(boutiqueIcon); // Associer l'icône au bouton
+    // Initialisation des boutons et ajout au panel
+    private void initButtons() {
+        add(relancerButton);
+        add(acceuil);
+        add(startGame);
+        add(nextStageBtn);
+        add(quitter);
+        add(buyCombo1);
+        add(buyCombo2);
+        add(buyCombo3);
+    }
 
-        // Personnaliser le bouton startGame de l'acceuil
-        startGame.setFont(new Font("Arial", Font.BOLD, 20));
-        startGame.setBackground(new Color(169, 169, 169));
-        startGame.setForeground(Color.WHITE); // Couleur du texte
-        startGame.setFocusPainted(false); // Retirer le contour par défaut quand on pointe sur le bouton
-
-        // Personnaliser le bouton boutiqueGame du jeu perdu et du jeu en pause
-        boutiqueGame.setFont(new Font("Arial", Font.BOLD, 18));
-        boutiqueGame.setFocusPainted(false); // Retirer le contour par défaut quand on pointe sur le bouton
-
-        // Personnaliser le bouton rejouer du jeu perdu et du jeu en pause
-        relancerButton.setFont(new Font("Arial", Font.BOLD, 18));
-        relancerButton.setFocusPainted(false); // Retirer le contour par défaut quand on pointe sur le bouton
-
-        // Personnaliser le bouton Acceuil du jeu perdu et du jeu en pause
-        acceuil.setFont(new Font("Arial", Font.BOLD, 18));
-        acceuil.setFocusPainted(false); // Retirer le contour par défaut quand on pointe sur le bouton
-
-        // Personnaliser le bouton Quitter de l'acceuil
-        quitter.setFont(new Font("Arial", Font.BOLD, 15));
-        quitter.setBackground(new Color(255, 0, 0));
-        quitter.setForeground(Color.WHITE); // Couleur du texte
-        quitter.setFocusPainted(false); // Retirer le contour par défaut quand on pointe sur le bouton
-
-        // Personnaliser le bouton Boutique de l'acceuil
-        boutique.setFont(new Font("Arial", Font.BOLD, 15));
-        boutique.setBackground(new Color(169, 169, 169));
-        boutique.setForeground(Color.WHITE); // Couleur du texte
-        boutique.setFocusPainted(false); // Retirer le contour par défaut quand on pointe sur le bouton
-
-
-        // Effet au survol du bouton startGame
-        startGame.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                startGame.setBackground(new Color(70, 130, 180)); // Couleur de fond au survol
-            }
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                startGame.setBackground(new Color(169, 169, 169)); // Revenir à la couleur initiale
-            }
-        });
-
-        // Actions des boutons
+    // Initialisation des listeners sur les boutons
+    private void initListeners() {
         // Redémarrer la partie
         relancerButton.addActionListener(e -> {
-             // Mettre à jour les états du jeu
-            game_lose = false;
-            game_running = true;
-            // Réinitialiser le personnage
-            inputs.resetKeys();
-            c.restartPlayer(); // Réinitialisez le personnage existant
-            c.resetInput(inputs);  // Réinitialiser les entrées clavier
-            this.addKeyListener(inputs);  // Reajouter le KeyListener pour les entrées clavier
-            this.setFocusable(true);  // Rendre le panel focusable pour les entrées clavier
-            // Réinitialiser les autres éléments du jeu
-            b.resetBonus();  // Réinitialiser les bonus
-            t.resetTirs();  // Réinitialiser les tirs
-
-        }); 
-
-        // Retour à l'acceuil
-        acceuil.addActionListener(e -> { 
-            game_lose = false;
-            game_running = false;
-            // Rendre les boutons invisibles lorsqu'on clique sur acceuil
-            relancerButton.setVisible(false);
-            acceuil.setVisible(false);
-            boutiqueGame.setVisible(false);
-            
-            repaint(); // Redessiner l'interface pour appliquer les changements
+            i.resetKeys();
+            c.restartPlayer();
+            c.resetInput(i);
+            configurerClavier();
+            tir.resetTirs();
+            b.resetBonus();
+            lm.relancerGame(); // relancer le jeu
         });
 
+        // Retour à l'accueil
+        acceuil.addActionListener(e -> {
+            lm.goToAccueil();
+            relancerButton.setVisible(false);
+            acceuil.setVisible(false);
+            repaint();
+        });
 
+        // Quitter le jeu
         quitter.addActionListener(e -> System.exit(0));
 
         // Lancer une nouvelle partie
         startGame.addActionListener(e -> {
-            // Mettre à jour les états du jeu
-            game_lose = false;
-            game_running = true;
-            // Réinitialiser le personnage
-            inputs.resetKeys();
-            c.restartPlayer(); // Réinitialisez le personnage existant
-            c.resetInput(inputs);  // Réinitialiser les entrées clavier
-            this.addKeyListener(inputs);  // Reajouter le KeyListener pour les entrées clavier
-            this.setFocusable(true);  // Rendre le panel focusable pour les entrées clavier
-            // Réinitialiser les autres éléments du jeu
-            b.resetBonus();  // Réinitialiser les bonus
-            t.resetTirs();  // Réinitialiser les tirs
-            b.resetBonus(); // Réinitialiser les bonus
+            lm.startNewGame();
+            i.resetKeys();
+            c.restartPlayer();
+            c.resetInput(i);
+            configurerClavier();
+            tir.resetTirs();
+            b.resetBonus();
         });
 
-        // Acceder à la boutique pendant la partie
-        boutiqueGame.addActionListener(e -> {
-            showStore = true;
+        // Passage au niveau suivant
+        nextStageBtn.addActionListener(e -> {
+            lm.goNextStage();
+            buyCombo1.setEnabled(true); // Activer le bouton de combo 1
+            buyCombo2.setEnabled(true); // Activer le bouton de combo 2
+            buyCombo3.setEnabled(true); // Activer le bouton de combo 3
+            c.activerLesCombos();
         });
 
-        // Acceder à la boutique
-        boutique.addActionListener(e -> {
-            showStore = true;
+        // Achat des combos
+        buyCombo1.addActionListener(e -> {
+            boolean isBuy = c.addComboBonus(new ComboBonus(1));
+            if (isBuy) {
+                buyCombo1.setEnabled(false);
+            }
         });
+        buyCombo2.addActionListener(e -> {
+            boolean isBuy = c.addComboBonus(new ComboBonus(2));
+            if (isBuy) {
+                buyCombo2.setEnabled(false);
+            }
+        });
+        buyCombo3.addActionListener(e -> {
+            boolean isBuy = c.addComboBonus(new ComboBonus(3));
+            if (isBuy) {
+                buyCombo3.setEnabled(false);
+            }
+        });
+    }
 
-        // Ajouter les boutons au JPanel mais les rendre invisibles par défaut
-        setLayout(null); // Utiliser un layout null pour positionner les boutons
-        relancerButton.setBounds(X / 2 - 100, Y / 2 - 30, 200, 50);
-        acceuil.setBounds(X / 2 - 100, Y / 2 + 100, 200, 50);
-        startGame.setBounds(30, Y - 180, 300, 55);
-        boutiqueGame.setBounds(X / 2 - 100, Y / 2 + 35, 200, 50);
-        boutique.setBounds(X - 320, 30, 140, 35);
-        quitter.setBounds(X - 150, 30, 100, 35);
+    // Méthode pour configurer le clavier
+    private void configurerClavier() {
+        this.removeKeyListener(i); // Évite les doublons
+        this.addKeyListener(i);
+        this.setFocusable(true);
+        this.requestFocusInWindow(); // Force le focus clavier
+    }
 
-        // Rendre les boutons invisibles par défaut
+    // Méthode utilitaire pour masquer les boutons de jeu
+    private void hideGameButtons() {
         relancerButton.setVisible(false);
         acceuil.setVisible(false);
         startGame.setVisible(false);
-        boutiqueGame.setVisible(false);
+        nextStageBtn.setVisible(false);
         quitter.setVisible(false);
-        boutique.setVisible(false);
-
-        // Ajouter les boutons au panel
-        add(relancerButton);
-        add(acceuil);
-        add(startGame);
-        add(boutiqueGame);
-        add(boutique);
-        add(quitter);
-
+        buyCombo1.setVisible(false);
+        buyCombo2.setVisible(false);
+        buyCombo3.setVisible(false);
     }
 
-// ----------------- On redefinie la méthode paint pour ajouter les elements graphiques  ------------------------------
+    // ------------------------------- Redessiner la vue
+    // -------------------------------
 
-    // Redessiner la vue pour ajouter nos différents éléments
+    // Redéfinition de paintComponent pour dessiner la vue
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        // Ajouter un fond d'ecran pour le jeu
-        Image bg = new ImageIcon("src/Images/bg.png").getImage();
+        // Dessiner le fond d'écran du niveau
+        String lien_bg = lm.getNiveauActuel().getImage_arriere_plan();
+        Image bg = new ImageIcon(lien_bg).getImage();
         g.drawImage(bg, 0, 0, X, Y, null);
 
-        // Si le joueur n'a plus de points de vie, le jeu est perdu
-        if (c.getVie() <= 0) {
-            game_lose = true;
-            c.pauseGame();
-        }
-
-        // Si le jeu est lancé, on affiche les éléments graphiques sinon on affiche un bouton pour lancer le jeu
-        if (!game_running) {
-            // Afficher un écran d'acceuil
+        // Afficher la page d'accueil si le jeu n'a pas démarré
+        if (!lm.getGameStart()) {
             drawAcceuil(g);
-        } 
-        
-        else {
-            if (!game_lose) {   // Si le jeu n'est pas perdu, on affiche les éléments graphiques
-
-                // Dessiner le personnage : la sorcière
+        } else {
+            // Si le jeu est en cours
+            if (lm.getGame_running() && !lm.getGameLose() && !lm.getGameWon()) {
                 g.drawImage(Character.characterSprite, (int) c.getCurrent_x(), (int) c.getCurrent_y(), null);
-                g.drawRect((int)c.getCurrent_x(), (int)c.getCurrent_y(), Character.WIDTH, Character.HEIGHT);
-
-                // Dessiner les tirs
-                drawTirs(g);
-
-                // Dessiner les bonus
-                drawBonus(g);
-
-                // Dessiner les araignées
-                drawAraignee(g);
-
-                // Dessiner les ennemis
-                drawEnnemies(g);
-
-                // Dessiner les obstacles
-                drawObstacle(g);
-               
-                // Dessiner la barre de vie
-                drawBarreVie(g);
-
-                // Rendre les boutons pour relancer et quitter invisibles
+                drawTirs(g); // Dessiner les tirs
+                drawBonus(g); // Dessiner les bonus
+                drawEnnemies(g); // Dessiner les ennemis
+                drawObstacle(g); // Dessiner les obstacles
+                drawBarreVie(g); // Dessiner la barre de vie
+                drawNiveau(g); // Dessiner le niveau actuel
                 relancerButton.setVisible(false);
                 acceuil.setVisible(false);
-                boutiqueGame.setVisible(false);
-
-            } 
-            else {
-                // Si le jeu est perdu, afficher un écran de fin de partie avec game over
-                drawGameStop(g);
-
+                nextStageBtn.setVisible(false);
             }
-
-            // Rendre les boutons startGame, boutique et quitter invisible car le jeu a démarré
+            // Masquer startGame et quitter quand le jeu est lancé
             startGame.setVisible(false);
-            boutique.setVisible(false);
             quitter.setVisible(false);
         }
-
+        // Affichage de l'écran de victoire/défaite et de la boutique
+        drawGameStop_Won(g);
+        drawBoutique(g);
     }
 
-// -----------------  Méthodes pour la vue -------------------------------------    
+    // -------------------------- Méthodes de dessin spécifiques
+    // ----------------------------
 
+    // Méthode pour dessiner la boutique (si applicable)
+    public void drawBoutique(Graphics g) {
+        if (lm.getShowStore()) {
+            // Un grand carré de au centre de la fenetre représente la boutique
+            g.setColor(new Color(220, 220, 220, 200)); // Couleur de fond de la boutique
+            g.fillRect(X / 2 - 350, Y / 2 - 350, 700, 700); // Fond de la boutique
+            g.setColor(Color.BLACK); // Couleur du contour
+            g.drawRect(X / 2 - 350, Y / 2 - 350, 700, 700); // Contour de la boutique
+            // Contenu de la boutique ici
+            g.setFont(new Font("Arial", Font.BOLD, 25)); // Police de la boutique
+            g.setColor(Color.BLACK); // Couleur du texte
+            g.drawString("Victoire ! Etage " + lm.getNiveauActuel().getNiveau() + " terminé", X / 2 - 120, Y / 2 - 300); // Titre de la boutique
+            // Dessiner les icones des combos
+            g.drawImage(imgCombo1, X / 2 - 225, Y / 2 - 210, null); // Image du bonus 1
+            g.drawImage(imgCombo2, X / 2 - 50, Y / 2 - 210, null); // Image du bonus 2
+            g.drawImage(imgCombo3, X / 2 + 125, Y / 2 - 210, null); // Image du bonus 3
+            // Afficher le nombre de pièces en bas à gauche
+            g.setColor(Color.BLACK); // Couleur du texte
+            g.setFont(new Font("Arial", Font.PLAIN, 15)); // Police de texte
+            g.drawString("Double tir", X / 2 - 220, Y / 2 - 105); // Texte du bonus 1
+            g.drawString("Vitesse x2", X / 2 - 45, Y / 2 - 105); // Texte du bonus 2
+            g.drawString("Vie pleine", X / 2 + 130, Y / 2 - 105); // Texte du bonus 3
+            // Afficher le nombre de bonus collectés en bas à gauche
+            g.setColor(Color.BLACK); // Couleur du texte
+            g.setFont(new Font("Arial", Font.PLAIN, 15)); // Police de texte
+            g.drawString("Mes pièces : " + c.getNombreBonus(), X / 2 - 320, Y / 2 + 320); // Texte du bonus 3
+            // Un cadre au centre avec les astuces
+            g.setColor(new Color(230, 230, 230, 200)); // Couleur de fond de la zone d'astuces
+            g.fillRect(X / 2 - 250, Y / 2 + 8, 500, 150); // Fond de la zone d'astuces
+            g.setColor(Color.BLACK); // Bordure de la zone d'astuces
+            g.setFont(new Font("Arial", Font.BOLD, 16));
+            g.drawString("Astuces", X / 2 - 250, Y / 2);
+            g.drawRect(X / 2 - 250, Y / 2 + 8, 500, 150);
+            // Ecrire les astuces
+            g.setFont(new Font("Arial", Font.PLAIN, 15));
+            g.drawString("•  Double tir vous permet de tirer 2 projectiles en un clic.", X / 2 - 240, Y / 2 + 35);
+            g.drawString("•  Vitesse x2 vous permet d'aller 2 fois plus vite.", X / 2 - 240, Y / 2 + 65);
+            g.drawString("•  Vie pleine réinitialise vos points de vie à 100%.", X / 2 - 240, Y / 2 + 95);
 
-    // Méthode pour dessiner les bonus avec l'image coin.png
+            // Afficher les boutons de la boutique
+            nextStageBtn.setVisible(true);
+            buyCombo1.setVisible(true);
+            buyCombo2.setVisible(true);
+            buyCombo3.setVisible(true);
+        } else {
+            nextStageBtn.setVisible(false);
+            buyCombo1.setVisible(false);
+            buyCombo2.setVisible(false);
+            buyCombo3.setVisible(false);
+        }
+    }
+
+    // Méthode pour dessiner les bonus (coins)
     public void drawBonus(Graphics g) {
         for (int i = 0; i < b.getPointBonus().size(); i++) {
             g.drawImage(coinImage, b.getPointBonus().get(i).x, b.getPointBonus().get(i).y, null);
-            // dessiner un rectangle aqutour des bonus
-            g.setColor(Color.GREEN);
-            g.drawRect(b.getPointBonus().get(i).x, b.getPointBonus().get(i).y, Bonus.WIDTH_B, Bonus.HEIGHT_B);
         }
     }
 
-    // Methode pour Récupérer la liste des tirs et les afficher à l'écran en tenant compte de la classe Tir
+    // Méthode pour dessiner les tirs
     public void drawTirs(Graphics g) {
         for (int i = 0; i < tir.getTirs().size(); i++) {
-            g.setColor(Color.RED);
             int x = tir.getTirs().get(i).getPosition().x;
             int y = tir.getTirs().get(i).getPosition().y;
-            g.fillOval(x, y, 8, 8);
-            // g.drawRect(tir.getTirs().get(i).getPosition().x, tir.getTirs().get(i).getPosition().y, 8, 8);
+            g.drawImage(Tir.imageProjectile, x, y, null);
         }
     }
 
-    // Méthode affichant tous les ennemis
+    // Méthode pour dessiner les ennemis
     public void drawEnnemies(Graphics g) {
         // Appel de la méthode statique sans instance
-        List<Ennemies> ennemies = Ennemies.getListEnnemies();
+        List<Ennemis> ennemis = Ennemis.getListEnnemies();
         // Boucle affichant tous les ennemis
-        for (Ennemies ennemi : ennemies) {
+        for (Ennemis ennemi : ennemis) {
             // Vérification si l'ennemi est un Fantome
             if (ennemi instanceof Fantome) {
                 Fantome fantome = (Fantome) ennemi; // Casting en Fantome
                 g.drawImage(fantome.img, (int) fantome.getPosition().getX(), (int) fantome.getPosition().getY(), null);
-                //g.drawRect((int) fantome.getPosition().getX(), (int) fantome.getPosition().getY(), Ennemies.WIDTH, Ennemies.HEIGHT);
+            }
+            // Vérifier si l'ennemi est une araignée
+            if (ennemi instanceof Araignee) {
+                Araignee araignee = (Araignee) ennemi; // Casting en Araignee
+                g.drawImage(araignee.img, (int) araignee.getPosition().getX(), (int) araignee.getPosition().getY(), null);
+            }
+            // Vérifier si l'ennemi est un goule
+            if(ennemi instanceof Goules) {
+                Goules goule = (Goules) ennemi; // Casting en Goule
+                g.drawImage(goule.img, (int) goule.getPosition().getX(), (int)
+                goule.getPosition().getY(), null);
+                if (goule.projectile != null) {
+                    g.setColor(Color.RED);
+                    g.fillOval(goule.projectile.getPosition().x,
+                    goule.projectile.getPosition().y, 8, 8);
+                    g.setColor(Color.BLACK);
+                }
             }
         }
     }
 
-    // Méthode pour dessiner les araignées
-    public void drawAraignee(Graphics g) {
-        ArrayList<Point> araignee = a.getPosition();
-        for (Point araigneP : araignee) {
-            g.drawImage(Araignee.araigneeSprite, araigneP.x, araigneP.y, null);
-            a.detecterCollisionAraigneeJoueur(araigneP);
-        }
-        if (a.getNombreAraignee() < 4) {
-            a.ListePosition();
-        }
-    }
-    
-    //methode qui dessine les obstacles
-    public void drawObstacle(Graphics g){
-        int i = 0;
+    // Méthode pour dessiner les obstacles
+    public void drawObstacle(Graphics g) {
         ArrayList<Point> obstacles = o.getObstacles();
-        for(Point obstacle : obstacles){
-        // Afficher les images de caisse
-        g.drawImage(imgObstacle,(int)obstacle.getX(),(int)obstacle.getY(), null);
-        i+=1;
+        for (Point obstacle : obstacles) {
+            g.drawImage(imgObstacle, (int) obstacle.getX(), (int) obstacle.getY(), null);
         }
     }
 
-    // Methode pour dessiner la page d'acceuil
+    // Méthode pour dessiner le niveau actuel
+    public void drawNiveau(Graphics g) {
+        Color couleur = (lm.getNiveauActuel().getNiveau() < 3) ? Color.BLACK : Color.WHITE;
+        g.setColor(couleur);
+        g.setFont(new Font("Arial", Font.PLAIN, 14));
+        g.drawString("Etage actuel : ", X - 450, 43);
+        for (int i = 0; i < 5; i++) {
+            int x = X - 355 + (i * 35);
+            g.drawRect(x, 30, 20, 20);
+            if (i < lm.getNiveauActuel().getNiveau()) {
+                g.setColor(new Color(70, 130, 180));
+                g.fillRect(x, 30, 20, 20);
+                g.setColor(couleur);
+            }
+            g.setFont(new Font("Arial", Font.PLAIN, 12));
+            g.drawString(String.valueOf(i + 1), x + 6, 45);
+        }
+    }
+
+    // Méthode pour dessiner la page d'accueil
     public void drawAcceuil(Graphics g) {
-        // Ajouter l'image un fond d'ecran pour l'acceuil
         Image bg = new ImageIcon("src/Images/acceuil.jpg").getImage();
         g.drawImage(bg, 0, 0, X, Y, null);
-        // Afficher les boutons de la page d'acceuil
         startGame.setVisible(true);
-        boutique.setVisible(true);
         quitter.setVisible(true);
-        // Afficher un message de bienvenue avec un contour rouge stylé
         g.setFont(new Font("Comic Sans MS", Font.BOLD, 60));
-        g.setColor(Color.RED);
-        g.drawString("Bienvenue sur Nibelhein", X / 2 - 400 - 2, Y / 2 - 2);
-        g.setColor(Color.GREEN);
-        g.drawString("Bienvenue sur Nibelhein", X / 2 - 400, Y / 2);  // Position exacte
+        g.setColor(Color.WHITE);
+        g.drawString("Bienvenue sur Nibelhein", X / 2 - 402, Y / 2 - 2);
+        g.setColor(Color.BLACK);
+        g.drawString("Bienvenue sur Nibelhein", X / 2 - 400, Y / 2);
     }
 
-    // Methode pour dessiner la barre de vie et les bonus collectés
+    // Méthode pour dessiner la barre de vie et afficher les pièces
     public void drawBarreVie(Graphics g) {
-        // Dessiner une barre de vie rouge dans un contour noir et des bordures arrondies
         g.setColor(Color.GRAY);
-        g.fillRoundRect(xBarreVie, yBarreVie, c.maxVie * 2, heightBarreVie, arcBarreVie, arcBarreVie);
+        g.fillRoundRect(xBarreVie, yBarreVie, c.MAXVIE * 40, heightBarreVie, arcBarreVie, arcBarreVie);
         g.setColor(Color.RED);
-        g.fillRoundRect(xBarreVie, yBarreVie, c.getVie() * 2, heightBarreVie, arcBarreVie, arcBarreVie);
+        g.fillRoundRect(xBarreVie, yBarreVie, c.getVie() * 40, heightBarreVie, arcBarreVie, arcBarreVie);
         g.setColor(Color.BLACK);
-        g.drawRoundRect(xBarreVie, yBarreVie, c.maxVie * 2, heightBarreVie, arcBarreVie, arcBarreVie);
-        // Afficher le nombre de bonus récupérés en haut à droite
+        g.drawRoundRect(xBarreVie, yBarreVie, c.MAXVIE * 40, heightBarreVie, arcBarreVie, arcBarreVie);
         g.drawImage(coinImage, X - 135, 25, null);
-        g.setColor(Color.BLACK);
-        g.drawString("Pièces : " + c.getNombreBonus(), X - 98, 40);
+        g.setColor(new Color(225, 0, 0));
+        g.setFont(new Font("Arial", Font.PLAIN, 14));
+        g.drawString("Pièces : " + c.getNombreBonus(), X - 100, 43);
     }
 
-    // Méthode pour afficher le gamelose et la page de pause selon le cas
-    public void drawGameStop(Graphics g) {
-        // Rendre les boutons visibles
-        if (game_lose == true && game_running == true) {
+    // Méthode pour dessiner l'écran de victoire ou de game over
+    public void drawGameStop_Won(Graphics g) {
+        if (lm.getGameWon()) {
             relancerButton.setVisible(true);
             acceuil.setVisible(true);
-            boutiqueGame.setVisible(true);
-            // Afficher un pop-up avec un message de game over
             g.setColor(Color.BLACK);
-            g.fillRect(X / 2 - 252, Y / 2 - 252, 504, 504); // Cadre noir (plus grand)
+            g.fillRect(X / 2 - 252, Y / 2 - 252, 504, 504);
             g.setColor(Color.WHITE);
-            g.fillRect(X / 2 - 250, Y / 2 - 250, 500, 500); // Fond du pop-up
+            g.fillRect(X / 2 - 250, Y / 2 - 250, 500, 500);
+            g.setColor(Color.GREEN);
+            g.setFont(new Font("Arial", Font.BOLD, 35));
+            g.drawString("Victoire !!!", X / 2 - 90, Y / 2 - 180);
+            g.setColor(Color.BLACK);
+            g.setFont(new Font("Arial", Font.BOLD, 20));
+            g.drawString("Vous êtes simplement imbattables !", X / 2 - 175, Y / 2 - 120);
+        } else if (lm.getGameLose()) {
+            relancerButton.setVisible(true);
+            acceuil.setVisible(true);
+            g.setColor(Color.BLACK);
+            g.fillRect(X / 2 - 252, Y / 2 - 252, 504, 504);
+            g.setColor(Color.WHITE);
+            g.fillRect(X / 2 - 250, Y / 2 - 250, 500, 500);
             g.setColor(Color.RED);
             g.setFont(new Font("Arial", Font.BOLD, 35));
             g.drawString("Game Over", X / 2 - 90, Y / 2 - 180);
             g.setColor(Color.BLACK);
             g.setFont(new Font("Arial", Font.BOLD, 20));
             g.drawString("Nombre de pièces collectées : " + c.getNombreBonus(), X / 2 - 150, Y / 2 - 120);
-
-        }
-
-        else {
+        } else {
             relancerButton.setVisible(false);
             acceuil.setVisible(false);
-            boutiqueGame.setVisible(false);
         }
     }
-
 }

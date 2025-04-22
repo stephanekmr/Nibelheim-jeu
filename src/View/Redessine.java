@@ -2,7 +2,7 @@ package View;
 
 public class Redessine extends Thread{
     // Constante pour le délai de rafraichissement
-    public static final int DELAY = 50;
+    public static final int DELAY = 25;
 
     // Instances de classe utiles
     private Affichage monAffichage;

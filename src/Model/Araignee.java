@@ -1,160 +1,79 @@
 package Model;
-import java.util.*;
-
-import javax.swing.ImageIcon;
 
 import java.awt.Image;
 import java.awt.Point;
-import Controler.Character;
+import javax.swing.ImageIcon;
 
-public class Araignee {
+public class Araignee extends Ennemis {
 
-    // Insances de classes utiles
-    private ArrayList<Point> posAraignee;
-    private PositionAraignee position;
-    private Tir tir;
-    private Character c;
-    private Bonus b;
-    // Dimensions de l'araignée (taille du gif)
-    public static final int weight = 80;
-    public static final int height = 50;
-    // Image gif de l'araignée
-    public static final Image araigneeSprite = new ImageIcon("src/Images/araignee.gif").getImage()
-            .getScaledInstance(weight, height, Image.SCALE_DEFAULT);
-    // Quantité d'araignées à afficher
-    private int quantite = 10;
-    private static final int POINTPERDU = 20; // Dégats causés par l'araignée
-    
-    public static final Random rand = new Random();
+    // Points de vie de l'ennemie
+    private static final int HEALTH_MAX = 2;
 
-    public Araignee(PositionAraignee position, Character c, Tir tir, Bonus bonus) {
-        this.tir = tir;
-        this.position = position;
-        this.c=c;
-        this.posAraignee = new ArrayList<Point>();
-        this.b = bonus;
-        ListePosition();
-        
+    // Taille du sprite du fantôme
+    public static final int WIDTH = 64;
+    public static final int HEIGHT = 40;
+
+    // Classe Character
+    Character c;
+
+    // Image de l'ennemie
+    public static final Image sprite = new ImageIcon("src/Images/araignee.gif").getImage().getScaledInstance(WIDTH,HEIGHT, Image.SCALE_DEFAULT);
+
+    // Constructeur
+    public Araignee(Character c, int speed, int bonusAmount, Point pos, Bonus b) {
+        super(c, HEALTH_MAX, speed, WIDTH, HEIGHT, bonusAmount, pos, sprite, b);
+        this.c = c;
     }
 
-    // Getters pour recuperer le nombre d'araignées
-    public int getNombreAraignee() {
-        return posAraignee.size();
-    }
+    // Méthode pour déplacer le fantôme vers le joueur
+    public void goToCharacter() {
+        // Récupérer la position actuelle du joueur
+        Point playerPosition = new Point((int) c.getCurrent_x(), (int) c.getCurrent_y());
 
-    public void ListePosition() {
-        for(int i=0; i<quantite;i++){
-            int x,y;
-            //mettre tous les points hors de la fenetre
-            //si le booleen est true, on met x en dessous de 0, sinon on met x au-dessus de AFTER
-            if (rand.nextBoolean()) { 
-                x = rand.nextInt(PositionAraignee.BEFORE); 
-            } else { 
-                x = PositionAraignee.AFTER + rand.nextInt(20); 
-            }
-    
-            // Générer Y soit en dessous de 0, soit au-dessus de HAUTEUR_MAX
-            if (rand.nextBoolean()) { 
-                y = -rand.nextInt(50);
-            } else { 
-                y = PositionAraignee.HAUTEUR_MAX + rand.nextInt(50); 
-            }
-    
-            posAraignee.add(new Point(x, y)); 
+        // Mettre à jour la hitbox de l'ennemie
+        this.hitboxEnnemie.x = this.position.x;
+        this.hitboxEnnemie.y = this.position.y;
+
+        // Récupérer la position actuelle du fantôme
+        Point ghostPosition = getPosition();
+
+        // Calculer la direction vers le joueur
+        int dx = playerPosition.x - ghostPosition.x;
+        int dy = playerPosition.y - ghostPosition.y;
+
+        // Calculer la distance entre le joueur et le fantôme
+        double distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Éviter la division par zéro
+        if (distance > 0) {
+            // Normaliser la direction
+            double directionX = dx / distance;
+            double directionY = dy / distance;
+
+            // Déplacer le fantôme dans la direction du joueur
+            ghostPosition.x += directionX * getSpeed();
+            ghostPosition.y += directionY * getSpeed();
+
+            // Mettre à jour la position du fantôme
+            setPosition(ghostPosition);
+        } else {
+            // Le fantôme est déjà sur le joueur
+            // System.out.println("Le fantôme a atteint le joueur !");
         }
     }
 
-    //recuperer la position des araignées et les deplaces vers le centre
-    public ArrayList<Point> getPosition() {
-        ArrayList<Point> araignee = new ArrayList<Point>();
-        for(Point point : this.posAraignee) {
-            if(point.x < (c.getCurrent_x() + c.WIDTH/2)){
-                if (point.y < c.getCurrent_y() + c.HEIGHT/2){
-                    point.x += rand.nextInt(position.vitesseA);
-                    point.y += rand.nextInt(position.vitesseA);
-                }
-                else if (point.y > c.getCurrent_x() + c.HEIGHT/2){
-                    point.x += rand.nextInt(position.vitesseA);
-                    point.y -= rand.nextInt(position.vitesseA);
-                }
-                else{
-                    point.x += rand.nextInt(position.vitesseA);
+    // Thread pour démarrer le déplacement de l'ennemie
+    public void startMovement() {
+        Thread movementThread = new Thread(() -> {
+            while (true) {
+                goToCharacter();
+                try {
+                    Thread.sleep(50); // Attendre 50 ms entre chaque déplacement
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
-            else if (point.x> c.getCurrent_x() + c.WIDTH/2){
-                if (point.y > c.getCurrent_y() + c.HEIGHT/2){
-                    point.x -= rand.nextInt(position.vitesseA);
-                    point.y -= rand.nextInt(position.vitesseA/2);
-                }
-                else if (point.y < c.getCurrent_y() + c.HEIGHT/2){
-                    point.x -= rand.nextInt(position.vitesseA);
-                    point.y += rand.nextInt(position.vitesseA/2);
-                }
-                else{
-                    point.x -= rand.nextInt(position.vitesseA);
-                }
-            }
-            else if (point.y < c.getCurrent_y() + c.HEIGHT/2){
-                point.y += rand.nextInt(position.vitesseA);
-            }
-            else if (point.y > c.getCurrent_y() + c.HEIGHT/2){
-                point.y -= rand.nextInt(position.vitesseA);
-            }
-            araignee.add(new Point(point.x, point.y));
-        }
-        return araignee;
-    }
-
-    // Détecter une collision entre l'araignée et le joueur
-    public void detecterCollisionAraigneeJoueur(Point point){
-        if (point.x >= c.getCurrent_x() && point.x <= c.getCurrent_x() + c.WIDTH
-                && point.y >= c.getCurrent_y() && point.y <= c.getCurrent_y() + c.HEIGHT) {
-            // Le joueur perds des points de vie du joueur s'il en a encore
-            if (c.getVie() > 0) {
-                c.setVie(c.getVie()-POINTPERDU);
-            }
-            // L'araignée est supprimée de la liste
-            posAraignee.remove(point);
-        }
-           
-    }
-
-    // Détecter une collision entre l'araignée et le tir (Taille de l'araignée prise en compte, on divise par 2 pour ne pas prendre en compte les pates)
-    public boolean collisionAraigneeProjectile(Point point) {
-        for (int i = 0; i < tir.getTirs().size(); i++) {
-            if (tir.getTirs().get(i).getPosition().x >= point.x && tir.getTirs().get(i).getPosition().x <= point.x + weight/2
-                    && tir.getTirs().get(i).getPosition().y >= point.y && tir.getTirs().get(i).getPosition().y <= point.y + height/2) {
-                // Un bonus apparait la où l'araignée meurt
-                b.addBonus(point);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // Détecter les araignées qui ont été touchées par un projectile et les supprimer de la liste
-    public void removeAraigneeTouchee() {
-        for (int i = 0; i < posAraignee.size(); i++) {
-            if (collisionAraigneeProjectile(posAraignee.get(i))) {
-                // L'araignée est supprimée de la liste
-                posAraignee.remove(i);
-            }
-        }
-    }
-
-    // Méthode pour supprimer une araignée
-    public void supprimerAraignee(Point point){
-        // L'araignée est supprimée de la liste
-        posAraignee.remove(point);
-    }
-
-    // @Override
-    public int getQuantite() {
-        return quantite;
-    }
-
-   // @Override
-    public void setQuantite(int quantite) {
-        this.quantite = quantite;
+        });
+        movementThread.start();
     }
 }

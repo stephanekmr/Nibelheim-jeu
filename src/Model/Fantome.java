@@ -4,38 +4,37 @@ import java.awt.Image;
 import java.awt.Point;
 import javax.swing.ImageIcon;
 
-import Controler.Character;
+import Controler.LevelManager;
 
-public class Fantome extends Ennemies {
+public class Fantome extends Ennemis {
 
     // Points de vie de l'ennemie
-    private static final int HEALTH_MAX = 10;
+    private static final int HEALTH_MAX = 5;
 
     // Taille du sprite du fantôme
-    public static final int weight = 80;
-    public static final int height = 50;
+    public static final int WIDTH = 52;
+    public static final int HEIGHT = 65;
 
     // Classe Character
     Character c;
 
     // Image de l'ennemie
-    public static final Image sprite = new ImageIcon("src/Images/ghost.png").getImage().getScaledInstance(weight,
-            height, Image.SCALE_DEFAULT);
+    public static final Image sprite = new ImageIcon("src/Images/ghost.png").getImage().getScaledInstance(WIDTH,HEIGHT, Image.SCALE_DEFAULT);
 
     // Constructeur
-    public Fantome(Character c, int speed, int bonusAmount, Point pos) {
-        super(c, HEALTH_MAX, speed, bonusAmount, pos, sprite);
+    public Fantome(Character c, int speed, int bonusAmount, Point pos, Bonus b) {
+        super(c, HEALTH_MAX, speed, WIDTH, HEIGHT, bonusAmount, pos, sprite, b);
         this.c = c;
     }
 
     // Méthode pour déplacer le fantôme vers le joueur
     public void goToCharacter() {
         // Récupérer la position actuelle du joueur
-        Point playerPosition = new Point((int)c.getCurrent_x(), (int)c.getCurrent_y());
+        Point playerPosition = new Point((int) c.getCurrent_x(), (int) c.getCurrent_y());
 
         // Mettre à jour la hitbox de l'ennemie
-        this.hitboxEnnemie.x=this.position.x;
-        this.hitboxEnnemie.y=this.position.y;
+        this.hitboxEnnemie.x = this.position.x;
+        this.hitboxEnnemie.y = this.position.y;
 
         // Récupérer la position actuelle du fantôme
         Point ghostPosition = getPosition();

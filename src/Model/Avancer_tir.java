@@ -5,7 +5,7 @@ public class Avancer_tir extends Thread {
 
     Tir tir;
     // Attributs et constantes
-    private int DELAY = 50;
+    private int DELAY = 30; // Délai de 30ms entre chaque mise à jour
 
     // constructeur de la classe
     public Avancer_tir(Tir t) {

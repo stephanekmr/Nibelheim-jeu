@@ -10,25 +10,29 @@ import java.awt.event.*;
 
 public class Inputs extends KeyAdapter {
 
-    boolean up = false;
-    boolean down = false;
-    boolean left = false;
-    boolean right = false;
+    public boolean up = false;
+    public boolean down = false;
+    public boolean left = false;
+    public boolean right = false;
 
     // 4 fonctions keyPressed qui vont mettre up, down, left ou right à true si la
     // touche correspondante est appuyée.
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_Z) {
             up = true;
+            System.out.println("Go up ...");
         }
         if (e.getKeyCode() == KeyEvent.VK_S) {
             down = true;
+            // System.out.println("Go down ...");
         }
         if (e.getKeyCode() == KeyEvent.VK_Q) {
             left = true;
+            // System.out.println("Go left ...");
         }
         if (e.getKeyCode() == KeyEvent.VK_D) {
             right = true;
+            // System.out.println("Go right ...");
         }
     }
 
